@@ -43,6 +43,12 @@
     let max = 100, count = 0, log = []; // 設定最大點數與初始值
     const $ = id => document.getElementById(id); // 簡化 document.getElementById 用法
 
+    // 取得當下時間字串（格式：YYYY-MM-DD HH:MM:SS）
+    const getTimestamp = () => {
+      const now = new Date();
+      return now.toLocaleString();
+    };
+
     // 重新渲染畫面（更新格子、獎勵、歷史）
     const render = () => {
       $('stampBox').innerHTML = Array.from({length: max}, (_, i) =>
@@ -58,15 +64,20 @@
       localStorage.setItem('data', JSON.stringify({count, log, name:$('username').value})); // 儲存資料到瀏覽器 localStorage
     };
 
-    // 更新點數（可加減任意數量）
-    const update = d => (count = Math.max(0, Math.min(max, count + d)), render()); // 控制點數上下限並重繪畫面
+    // 更新點數（可加減任意數量）並記錄時間
+    const update = d => {
+      const action = d > 0 ? `➕ 增加 ${d} 點` : `➖ 扣除 ${Math.abs(d)} 點`;
+      count = Math.max(0, Math.min(max, count + d));
+      log.push(`${action}｜${getTimestamp()}`);
+      render();
+    };
 
-    // 歸零點數並記錄歷史
-    const reset = () => (count = 0, log.push('🔁 歸零'), render()); // 點數歸零並記錄在紀錄中
+    // 歸零點數並記錄歷史與時間
+    const reset = () => (count = 0, log.push(`🔁 歸零｜${getTimestamp()}`), render());
 
-    // 兌換功能：若點數足夠則扣除並記錄，否則提示不足
+    // 兌換功能：若點數足夠則扣除並記錄時間，否則提示不足
     const redeem = (cost, label) =>
-      count >= cost ? (count -= cost, log.push(`${label} (-${cost})`), render()) : alert('點數不足'); // 執行兌換或警告
+      count >= cost ? (count -= cost, log.push(`${label} (-${cost})｜${getTimestamp()}`), render()) : alert('點數不足');
 
     // 網頁載入時載入 localStorage 的資料並初始化畫面
     onload = () => {
