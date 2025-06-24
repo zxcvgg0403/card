@@ -5,65 +5,76 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- 手機適配 viewport 設定 -->
   <title>集點卡</title>
   <style>
-    body { font-family: Arial; padding: 20px; background: #f9f9f9; }
-    .stamp-box { display: flex; flex-wrap: wrap; gap: 2px; max-width: 100%; }
-    .stamp { width: calc(2.5% - 2px); aspect-ratio: 1; border: 1px solid #666; text-align: center; background: #eee; flex-shrink: 0; font-size: 8px; }
-    .stamped { background: #4caf50; color: #fff; }
-    .reward, .history { margin-top: 20px; }
-    button, input { font-size: 16px; margin: 5px 10px 5px 0; padding: 8px; }
+    body { font-family: Arial; padding: 20px; background: #f9f9f9; } /* 設定字型與背景 */
+    .stamp-box { display: flex; flex-wrap: wrap; gap: 2px; max-width: 100%; } /* 格子排列方式 */
+    .stamp { width: calc(2.5% - 2px); aspect-ratio: 1; border: 1px solid #666; text-align: center; background: #eee; flex-shrink: 0; font-size: 8px; } /* 格子樣式 */
+    .stamped { background: #4caf50; color: #fff; } /* 已集點格子樣式 */
+    .reward, .history { margin-top: 20px; } /* 獎勵與紀錄區塊間距 */
+    button, input { font-size: 16px; margin: 5px 10px 5px 0; padding: 8px; } /* 按鈕與輸入欄位樣式 */
 
     @media (max-width: 600px) {
-      .stamp { font-size: 6px; }
-      button, input { font-size: 14px; width: 100%; }
-      body { padding: 10px; }
+      .stamp { font-size: 6px; } /* 手機模式下的格子字體 */
+      button, input { font-size: 14px; width: 100%; } /* 手機模式下按鈕與輸入欄寬度 */
+      body { padding: 10px; } /* 手機模式下的頁面內距 */
     }
   </style>
 </head>
 <body>
   <h2>🧾 集點卡系統</h2>
-  使用者名稱：<input id="username" placeholder="請輸入名稱" />
-  <p>集滿 <strong>3</strong> 點換 <strong>飲料券</strong>，<strong>5</strong> 點換 <strong>餐券</strong>。</p>
+  使用者名稱：<input id="username" placeholder="請輸入名稱" /> <!-- 使用者名稱輸入欄位 -->
+  <p>集滿 <strong>3</strong> 點換 <strong>飲料券</strong>，<strong>5</strong> 點換 <strong>餐券</strong>。</p> <!-- 集點規則說明 -->
 
-  <div class="stamp-box" id="stampBox"></div>
+  <div class="stamp-box" id="stampBox"></div> <!-- 集點格子區 -->
 
-  <button onclick="update(1)">集一點</button>
-  <button onclick="update(-1)">扣一點</button>
-  <button onclick="reset()">歸零</button>
-  <button onclick="redeem(3,'🥤 飲料券')">飲料券(-3)</button>
-  <button onclick="redeem(5,'🍱 餐券')">餐券(-5)</button>
+  <button onclick="update(1)">加1點</button> <!-- 增加 1 點 -->
+  <button onclick="update(10)">加10點</button> <!-- 增加 10 點 -->
+  <button onclick="update(50)">加 50 點</button> <!-- 增加 50 點 -->
+  <button onclick="update(-1)">扣1點</button> <!-- 扣除 1 點 -->
+  <button onclick="update(-10)">扣10點</button> <!-- 扣除 10 點 -->
+  <button onclick="update(-50)">扣 50 點</button> <!-- 扣除 50 點 -->
+  <button onclick="redeem(3,'🥤 飲料券')">飲料券(-3)</button> <!-- 兌換飲料券 -->
+  <button onclick="redeem(5,'🍱 餐券')">餐券(-5)</button> <!-- 兌換餐券 -->
+  <button onclick="reset()">歸零</button> <!-- 歸零按鈕 -->
 
-  <div class="reward" id="reward"></div>
-  <div class="history" id="history"></div>
+  <div class="reward" id="reward"></div> <!-- 顯示獎勵資訊 -->
+  <div class="history" id="history"></div> <!-- 顯示兌換紀錄 -->
 
   <script>
-    let max = 100, count = 0, log = [];
-    const $ = id => document.getElementById(id);
+    let max = 100, count = 0, log = []; // 設定最大點數與初始值
+    const $ = id => document.getElementById(id); // 簡化 document.getElementById 用法
 
+    // 重新渲染畫面（更新格子、獎勵、歷史）
     const render = () => {
       $('stampBox').innerHTML = Array.from({length: max}, (_, i) =>
-        `<div class="stamp${i < count ? ' stamped">✓' : '">'}</div>`).join('');
+        `<div class="stamp${i < count ? ' stamped">✓' : '">'}</div>`).join(''); // 顯示每個格子，已集點的顯示打勾
 
       $('reward').innerHTML = `👤 <b>${$('username').value || '(未填寫)'}</b><br>
         🔢 點數：<b>${count}</b><br>
         🎁 飲料券：<b>${Math.floor(count/3)}</b> 張<br>
-        🍱 餐券：<b>${Math.floor(count/5)}</b> 張`;
+        🍱 餐券：<b>${Math.floor(count/5)}</b> 張`; // 顯示使用者資訊與可兌換數量
 
-      $('history').innerHTML = '📜 兌換紀錄：<br>' + log.map(e => `• ${e}`).join('<br>');
+      $('history').innerHTML = '📜 兌換紀錄：<br>' + log.map(e => `• ${e}`).join('<br>'); // 顯示歷史紀錄
 
-      localStorage.setItem('data', JSON.stringify({count, log, name:$('username').value}));
+      localStorage.setItem('data', JSON.stringify({count, log, name:$('username').value})); // 儲存資料到瀏覽器 localStorage
     };
 
-    const update = d => (count = Math.max(0, Math.min(max, count + d)), render());
-    const reset = () => (count = 0, log.push('🔁 歸零'), render());
-    const redeem = (cost, label) =>
-      count >= cost ? (count -= cost, log.push(`${label} (-${cost})`), render()) : alert('點數不足');
+    // 更新點數（可加減任意數量）
+    const update = d => (count = Math.max(0, Math.min(max, count + d)), render()); // 控制點數上下限並重繪畫面
 
+    // 歸零點數並記錄歷史
+    const reset = () => (count = 0, log.push('🔁 歸零'), render()); // 點數歸零並記錄在紀錄中
+
+    // 兌換功能：若點數足夠則扣除並記錄，否則提示不足
+    const redeem = (cost, label) =>
+      count >= cost ? (count -= cost, log.push(`${label} (-${cost})`), render()) : alert('點數不足'); // 執行兌換或警告
+
+    // 網頁載入時載入 localStorage 的資料並初始化畫面
     onload = () => {
-      const saved = JSON.parse(localStorage.getItem('data')) || {};
-      count = saved.count || 0;
-      log = saved.log || [];
-      $('username').value = saved.name || '';
-      render();
+      const saved = JSON.parse(localStorage.getItem('data')) || {}; // 讀取儲存的資料（如果有）
+      count = saved.count || 0; // 還原點數
+      log = saved.log || []; // 還原歷史紀錄
+      $('username').value = saved.name || ''; // 還原使用者名稱
+      render(); // 初始化畫面
     };
   </script>
 </body>
