@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- 手機適配 viewport 設定 -->
+  <title>集點卡</title>
+  <style>
+    body { font-family: Arial; padding: 20px; background: #f9f9f9; }
+    .stamp-box { display: flex; flex-wrap: wrap; gap: 2px; max-width: 100%; }
+    .stamp { width: calc(2.5% - 2px); aspect-ratio: 1; border: 1px solid #666; text-align: center; background: #eee; flex-shrink: 0; font-size: 8px; }
+    .stamped { background: #4caf50; color: #fff; }
+    .reward, .history { margin-top: 20px; }
+    button, input { font-size: 16px; margin: 5px 10px 5px 0; padding: 8px; }
+
+    @media (max-width: 600px) {
+      .stamp { font-size: 6px; }
+      button, input { font-size: 14px; width: 100%; }
+      body { padding: 10px; }
+    }
+  </style>
+</head>
+<body>
+  <h2>🧾 集點卡系統</h2>
+  使用者名稱：<input id="username" placeholder="請輸入名稱" />
+  <p>集滿 <strong>3</strong> 點換 <strong>飲料券</strong>，<strong>5</strong> 點換 <strong>餐券</strong>。</p>
+
+  <div class="stamp-box" id="stampBox"></div>
+
+  <button onclick="update(1)">集一點</button>
+  <button onclick="update(-1)">扣一點</button>
+  <button onclick="reset()">歸零</button>
+  <button onclick="redeem(3,'🥤 飲料券')">飲料券(-3)</button>
+  <button onclick="redeem(5,'🍱 餐券')">餐券(-5)</button>
+
+  <div class="reward" id="reward"></div>
+  <div class="history" id="history"></div>
+
+  <script>
+    let max = 100, count = 0, log = [];
+    const $ = id => document.getElementById(id);
+
+    const render = () => {
+      $('stampBox').innerHTML = Array.from({length: max}, (_, i) =>
+        `<div class="stamp${i < count ? ' stamped">✓' : '">'}</div>`).join('');
+
+      $('reward').innerHTML = `👤 <b>${$('username').value || '(未填寫)'}</b><br>
+        🔢 點數：<b>${count}</b><br>
+        🎁 飲料券：<b>${Math.floor(count/3)}</b> 張<br>
+        🍱 餐券：<b>${Math.floor(count/5)}</b> 張`;
+
+      $('history').innerHTML = '📜 兌換紀錄：<br>' + log.map(e => `• ${e}`).join('<br>');
+
+      localStorage.setItem('data', JSON.stringify({count, log, name:$('username').value}));
+    };
+
+    const update = d => (count = Math.max(0, Math.min(max, count + d)), render());
+    const reset = () => (count = 0, log.push('🔁 歸零'), render());
+    const redeem = (cost, label) =>
+      count >= cost ? (count -= cost, log.push(`${label} (-${cost})`), render()) : alert('點數不足');
+
+    onload = () => {
+      const saved = JSON.parse(localStorage.getItem('data')) || {};
+      count = saved.count || 0;
+      log = saved.log || [];
+      $('username').value = saved.name || '';
+      render();
+    };
+  </script>
+</body>
+</html>
