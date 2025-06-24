@@ -35,6 +35,7 @@
   <button onclick="redeem(3,'🥤 飲料券')">飲料券(-3)</button> <!-- 兌換飲料券 -->
   <button onclick="redeem(5,'🍱 餐券')">餐券(-5)</button> <!-- 兌換餐券 -->
   <button onclick="reset()">歸零</button> <!-- 歸零按鈕 -->
+  <button onclick="clearAll()">重新整理</button> <!-- 新增清除所有紀錄與點數的按鈕 -->
 
   <div class="reward" id="reward"></div> <!-- 顯示獎勵資訊 -->
   <div class="history" id="history"></div> <!-- 顯示兌換紀錄 -->
@@ -78,6 +79,15 @@
     // 兌換功能：若點數足夠則扣除並記錄時間，否則提示不足
     const redeem = (cost, label) =>
       count >= cost ? (count -= cost, log.push(`${label} (-${cost})｜${getTimestamp()}`), render()) : alert('點數不足');
+
+    // 清除所有點數與歷史紀錄（類似重新整理整個使用者資料）
+    const clearAll = () => {
+      count = 0;
+      log = [];
+      $('username').value = '';
+      localStorage.removeItem('data');
+      render();
+    };
 
     // 網頁載入時載入 localStorage 的資料並初始化畫面
     onload = () => {
