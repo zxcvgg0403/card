@@ -4,8 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>集點卡</title>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
   <style>
     body { font-family: Arial; padding: 20px; background: #f9f9f9; }
     .stamp-box { display: flex; flex-wrap: wrap; gap: 2px; max-width: 100%; }
@@ -21,9 +19,9 @@
   </style>
 </head>
 <body>
-  <h2>🧾 集點卡系統</h2>
+  <h2>🗾️ 集點卡系統</h2>
   使用者名稱：<input id="username" placeholder="請輸入名稱" />
-  <p>集滿 <strong>3</strong> 點換 <strong>飲料券</strong>，<strong>5</strong> 點換 <strong>餐券</strong>。</p>
+  <p>集滿 <strong>3</strong> 點換 <strong>飲料券</strong>，<strong>5</strong> 點換 <strong>餐券</strong>，<strong>50</strong> 點換 <strong>購物券</strong>，<strong>100</strong> 點換 <strong>手機券</strong>。</p>
   <div class="stamp-box" id="stampBox"></div>
   <button onclick="update(1)">加1點</button>
   <button onclick="update(10)">加10點</button>
@@ -31,75 +29,52 @@
   <button onclick="update(-1)">扣1點</button>
   <button onclick="update(-10)">扣10點</button>
   <button onclick="update(-50)">扣 50 點</button>
-  <button onclick="redeem(3,'🥤 飲料券')">飲料券(-3)</button>
+  <button onclick="redeem(3,'🍼 飲料券')">飲料券(-3)</button>
   <button onclick="redeem(5,'🍱 餐券')">餐券(-5)</button>
+  <button onclick="redeem(50,'💳 購物券')">購物券(-50)</button>
+  <button onclick="redeem(100,'📱 手機券')">手機券(-100)</button>
   <button onclick="reset()">歸零</button>
   <button onclick="clearAll()">重新整理</button>
   <div class="reward" id="reward"></div>
   <div class="history" id="history"></div>
 
   <script>
-    // 初始化 Firebase 設定
-    const firebaseConfig = {
-      apiKey: "AIzaSyCt9Zi9V_j2C5Xwz4qSC_Kc9XXa1e_VhH4",
-      authDomain: "stamp-card-5f9dd.firebaseapp.com",
-      projectId: "stamp-card-5f9dd",
-      storageBucket: "stamp-card-5f9dd.firebasestorage.app",
-      messagingSenderId: "920207796171",
-      appId: "1:920207796171:web:4a64fbd90bdb801a56784e",
-      measurementId: "G-D9MY0KVFZL"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-
-    // 定義全域變數
     let max = 100, count = 0, log = [];
     const $ = id => document.getElementById(id);
-
-    // 取得目前時間字串
     const getTimestamp = () => new Date().toLocaleString();
 
-    // 將點數與歷史渲染到畫面上
     const render = () => {
       $('stampBox').innerHTML = Array.from({length: max}, (_, i) => `<div class="stamp${i < count ? ' stamped">✓' : '">'}</div>`).join('');
-      $('reward').innerHTML = `👤 <b>${$('username').value || '(未填寫)'}</b><br>🔢 點數：<b>${count}</b><br>🎁 飲料券：<b>${Math.floor(count/3)}</b> 張<br>🍱 餐券：<b>${Math.floor(count/5)}</b> 張`;
+      $('reward').innerHTML = `👤 <b>${$('username').value || '(未填寫)'}</b><br>
+        🔢 點數：<b>${count}</b><br>
+        🎁 飲料券：<b>${Math.floor(count/3)}</b> 張<br>
+        🍱 餐券：<b>${Math.floor(count/5)}</b> 張<br>
+        💳 購物券：<b>${Math.floor(count/50)}</b> 張<br>
+        📱 手機券：<b>${Math.floor(count/100)}</b> 張`;
       $('history').innerHTML = '📜 兌換紀錄：<br>' + log.map(e => `• ${e}`).join('<br>');
     };
 
-    // 儲存資料到 Firebase
-    const save = () => {
-      const name = $('username').value || 'guest';
-      db.ref('users/' + name).set({ count, log });
-    };
-
-    // 增加或扣除點數
     const update = d => {
       const action = d > 0 ? `➕ 增加 ${d} 點` : `➖ 扣除 ${Math.abs(d)} 點`;
       count = Math.max(0, Math.min(max, count + d));
       log.push(`${action}｜${getTimestamp()}`);
-      save();
       render();
     };
 
-    // 歸零點數
     const reset = () => {
       count = 0;
       log.push(`🔁 歸零｜${getTimestamp()}`);
-      save();
       render();
     };
 
-    // 兌換獎品
     const redeem = (cost, label) => {
       if (count >= cost) {
         count -= cost;
         log.push(`${label} (-${cost})｜${getTimestamp()}`);
-        save();
         render();
       } else alert('點數不足');
     };
 
-    // 清除畫面資料不儲存
     const clearAll = () => {
       count = 0;
       log = [];
@@ -107,35 +82,6 @@
       render();
     };
 
-    // Firebase 資料監聽（實現即時同步）
-    const listen = () => {
-      const name = $('username').value;
-      if (!name) return;
-      db.ref('users/' + name).on('value', snapshot => {
-        const data = snapshot.val();
-        if (data) {
-          count = data.count || 0;
-          log = data.log || [];
-          render();
-        }
-      });
-    };
-
-    // 使用者切換時載入對應資料並開始監聽
-    $('username').addEventListener('change', () => {
-      const name = $('username').value;
-      if (name) {
-        db.ref('users/' + name).once('value').then(snapshot => {
-          const data = snapshot.val();
-          count = data?.count || 0;
-          log = data?.log || [];
-          render();
-          listen(); // 啟用即時同步
-        });
-      }
-    });
-
-    // 初始載入畫面
     window.onload = render;
   </script>
 </body>
